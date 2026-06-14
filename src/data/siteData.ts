@@ -272,3 +272,36 @@ export const SITE_DATA: SiteData = {
     ],
   },
 };
+
+/** Serialize a SiteData object back to TypeScript source matching this module's format */
+export function serializeSiteData(data: SiteData): string {
+  const indent = (depth: number) => '  '.repeat(depth);
+
+  function serializeValue(value: unknown, depth: number): string {
+    if (value === null || value === undefined) return 'null';
+    if (typeof value === 'string') {
+      // Use template literals for multiline strings or strings containing quotes
+      if (value.includes('\n') || value.includes('"') || value.includes("'") || value.includes('`')) {
+        return '`' + value.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$') + '`';
+      }
+      return JSON.stringify(value);
+    }
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    if (Array.isArray(value)) {
+      if (value.length === 0) return '[]';
+      const items = value.map((item) => serializeValue(item, depth + 1)).join(',\n' + indent(depth + 1));
+      return `[\n${indent(depth + 1)}${items},\n${indent(depth)}]`;
+    }
+    if (typeof value === 'object') {
+      const entries = Object.entries(value as Record<string, unknown>)
+        .filter(([, v]) => v !== undefined)
+        .map(([k, v]) => `${k}: ${serializeValue(v, depth + 1)}`)
+        .join(',\n' + indent(depth + 1));
+      if (!entries) return '{}';
+      return `{\n${indent(depth + 1)}${entries},\n${indent(depth)}}`;
+    }
+    return JSON.stringify(value);
+  }
+
+  return `export const SITE_DATA: SiteData = ${serializeValue(data, 0)};\n`;
+}

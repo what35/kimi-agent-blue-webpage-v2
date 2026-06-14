@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useEditableData } from '../context/EditableDataContext';
 import type { Tool, TimelineItem } from '../data/siteData';
 
+const TOKEN_KEY = 'dt1998_github_token';
+
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '6px 8px', border: '2px solid #000', borderRadius: 4,
   fontSize: 12, marginBottom: 6, boxSizing: 'border-box', fontFamily: 'var(--font-body)',
@@ -408,7 +410,7 @@ function DirtyBar({ onSave, onCancel }: { onSave: () => void; onCancel: () => vo
 export default function AdminPanel() {
   const ctx = useEditableData();
   const { data, isAdmin, showAdminPanel, toggleAdminPanel, login, logout, changePassword,
-    updateBrand, updateBio, updateSkills, updateHobbies, updateTimeline, updateHonors, updateTools } = ctx;
+    updateBrand, updateBio, updateSkills, updateHobbies, updateTimeline, updateHonors, updateTools, publishToGitHub } = ctx;
 
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
@@ -416,6 +418,30 @@ export default function AdminPanel() {
   const [newPw, setNewPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
   const [pwMsg, setPwMsg] = useState('');
+  const [gitToken, setGitToken] = useState('');
+  const [tokenSaved, setTokenSaved] = useState(false);
+  const [publishStatus, setPublishStatus] = useState('');
+
+  useEffect(() => {
+    const stored = localStorage.getItem(TOKEN_KEY) || '';
+    setGitToken(stored);
+    setTokenSaved(!!stored);
+  }, []);
+
+  const saveToken = () => {
+    localStorage.setItem(TOKEN_KEY, gitToken.trim());
+    setTokenSaved(true);
+    setPublishStatus('Token 已保存');
+    setTimeout(() => setPublishStatus(''), 2000);
+  };
+
+  const handlePublish = async () => {
+    const token = gitToken.trim();
+    if (!token) { setPublishStatus('请先输入 GitHub Token'); return; }
+    setPublishStatus('发布中...');
+    const result = await publishToGitHub(token, 'content: update from admin panel');
+    setPublishStatus(result.message);
+  };
 
   const profile = data.profile;
   const tools = data.tools;
@@ -501,6 +527,32 @@ export default function AdminPanel() {
           <input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handlePw()} style={inputStyle} placeholder="确认新密码" />
           {pwMsg && <p style={{ color: pwMsg.includes('成功') ? '#22c55e' : '#ff4444', fontSize: 11, margin: '0 0 6px' }}>{pwMsg}</p>}
           <button onClick={handlePw} style={{ ...btnStyle('var(--memphis-primary)', '#fff'), width: '100%' }}>确认修改</button>
+        </Section>
+
+        <Section title="发布到网站">
+          <p style={{ fontSize: 11, color: '#666', margin: '0 0 8px' }}>
+            修改保存后，点击发布即可同步到 GitHub 并重新部署。
+          </p>
+          <input
+            type="password"
+            value={gitToken}
+            onChange={(e) => { setGitToken(e.target.value); setTokenSaved(false); }}
+            style={{ ...inputStyle, fontFamily: 'monospace', fontSize: 11 }}
+            placeholder="GitHub Personal Access Token"
+          />
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <button onClick={saveToken} style={{ ...btnStyle(tokenSaved ? '#86CCCA' : '#e0e0e0', tokenSaved ? '#fff' : '#000'), flex: 1 }}>
+              {tokenSaved ? 'Token 已保存' : '保存 Token'}
+            </button>
+            <button onClick={handlePublish} style={{ ...btnStyle('var(--memphis-primary)', '#fff'), flex: 2 }}>
+              发布到网站
+            </button>
+          </div>
+          {publishStatus && (
+            <p style={{ fontSize: 11, color: publishStatus.includes('成功') || publishStatus.includes('已保存') ? '#22c55e' : '#ff4444', margin: '0 0 6px' }}>
+              {publishStatus}
+            </p>
+          )}
         </Section>
       </div>
     </div>

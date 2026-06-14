@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { loadSiteData, saveSiteData, resetSiteData, getAdminPassword, setAdminPassword } from '../data/db';
+import { serializeSiteData } from '../data/siteData';
+import { publishToGitHub, type PublishResult } from '../utils/githubPublisher';
 import type { SiteData, Idea, Skill, Hobby, TimelineItem, Tool, FoodSpot } from '../data/siteData';
 
 /*
@@ -44,6 +46,7 @@ interface EditableDataContextType {
   updateFoodSpot: (id: string, updates: Partial<FoodSpot>) => void;
   deleteFoodSpot: (id: string) => void;
   resetData: () => void;
+  publishToGitHub: (token: string, message?: string) => Promise<PublishResult>;
 }
 
 const EditableDataContext = createContext<EditableDataContextType | null>(null);
@@ -129,12 +132,17 @@ export function EditableDataProvider({ children }: { children: ReactNode }) {
     setData(loadSiteData());
   }, []);
 
+  const publish = useCallback(async (token: string, message?: string): Promise<PublishResult> => {
+    const tsContent = serializeSiteData(data);
+    return publishToGitHub(token, tsContent, message);
+  }, [data]);
+
   return (
     <EditableDataContext.Provider value={{
       data, isAdmin, showAdminPanel, login, logout, toggleAdminPanel, changePassword,
       updateBrand, updateBio, updateSkills, updateHobbies, updateTimeline, updateHonors,
       updateTools, addIdea, updateIdea, deleteIdea,
-      addFoodSpot, updateFoodSpot, deleteFoodSpot, resetData,
+      addFoodSpot, updateFoodSpot, deleteFoodSpot, resetData, publishToGitHub: publish,
     }}>
       {children}
     </EditableDataContext.Provider>
