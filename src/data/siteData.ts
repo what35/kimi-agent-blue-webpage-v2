@@ -162,7 +162,7 @@ export const SITE_DATA: SiteData = {
     hobbies: [
       {
         name: "猪猪侠忠实粉丝",
-        detail: "从小看猪猪侠长大，喜欢它的勇敢和乐观。收藏猪猪侠周边，关注每一次新作品上映。",
+        detail: "猪门永存",
       },
       {
         name: "研究 AI 新工具",
@@ -174,7 +174,7 @@ export const SITE_DATA: SiteData = {
       },
       {
         name: "港乐爱好者",
-        detail: "喜欢听粤语歌，从经典老歌到新生代作品都有涉猎。",
+        detail: "最喜欢的女歌手是容祖儿（不唱挥着翅膀的女孩版）",
       },
       {
         name: "老吃家",
