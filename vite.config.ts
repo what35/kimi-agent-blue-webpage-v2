@@ -4,6 +4,8 @@ import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import { inspectAttr } from 'kimi-plugin-inspect-react'
 
+import { cloudflare } from "@cloudflare/vite-plugin";
+
 function generateVersionJson() {
   return {
     name: 'generate-version-json',
@@ -23,7 +25,7 @@ function generateVersionJson() {
 // https://vite.dev/config/
 export default defineConfig({
   base: './',
-  plugins: [inspectAttr(), react(), generateVersionJson()],
+  plugins: [inspectAttr(), react(), generateVersionJson(), cloudflare()],
   server: {
     port: 3000,
   },
