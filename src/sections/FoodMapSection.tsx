@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useEditableData } from '../context/EditableDataContext';
 import { usePage } from '../context/PageContext';
+import { latLngToXY, xyToLatLng } from '../data/siteData';
 import type { FoodSpot } from '../data/siteData';
 
 // City coordinates calibrated to the real China map image (percentage x,y)
@@ -27,38 +28,67 @@ const CITY_COORDS: Record<string, { x: number; y: number }> = {
   '自贡': { x: 50, y: 52 }, '宜宾': { x: 48, y: 54 }, '泸州': { x: 50, y: 54 },
 };
 
+function getCityLatLng(city: string): { lat: number; lng: number } | null {
+  const coords = CITY_COORDS[city.trim()];
+  if (!coords) return null;
+  return xyToLatLng(coords.x, coords.y);
+}
+
 const RATING_STARS = [1, 2, 3, 4, 5];
 
 function FoodForm({
-  initialData, onSave, onCancel,
+  initialData, onSave, onCancel, draftLatLng,
 }: {
   initialData?: Partial<FoodSpot>;
   onSave: (data: Omit<FoodSpot, 'id'>) => void;
   onCancel: () => void;
+  draftLatLng?: { lat: number; lng: number } | null;
 }) {
   const [name, setName] = useState(initialData?.name || '');
-  const [city, setCity] = useState(initialData?.city || '');
   const [province, setProvince] = useState(initialData?.province || '');
+  const [city, setCity] = useState(initialData?.city || '');
+  const [district, setDistrict] = useState(initialData?.district || '');
   const [intro, setIntro] = useState(initialData?.intro || '');
   const [rating, setRating] = useState(initialData?.rating || 5);
+  const [lat, setLat] = useState(initialData?.lat ?? 31.23);
+  const [lng, setLng] = useState(initialData?.lng ?? 121.47);
   const [date, setDate] = useState(initialData?.date || new Date().toISOString().split('T')[0].slice(0, 7));
 
-  const cityCoords = CITY_COORDS[city.trim()];
+  const handleCityBlur = () => {
+    const cityLatLng = getCityLatLng(city);
+    if (cityLatLng) {
+      setLat(Number(cityLatLng.lat.toFixed(2)));
+      setLng(Number(cityLatLng.lng.toFixed(2)));
+    }
+  };
 
   const handleSave = () => {
     if (!name.trim() || !city.trim()) return;
-    const coords = CITY_COORDS[city.trim()];
+    const { x, y } = latLngToXY(lat, lng);
     onSave({
       name: name.trim(),
-      city: city.trim(),
       province: province.trim() || city.trim(),
+      city: city.trim(),
+      district: district.trim() || undefined,
       intro: intro.trim(),
       rating,
-      x: coords?.x ?? 50,
-      y: coords?.y ?? 50,
+      lat: Number(lat.toFixed(4)),
+      lng: Number(lng.toFixed(4)),
+      x,
+      y,
       date,
     });
   };
+
+  const setLatFromString = (val: string) => { const n = Number.parseFloat(val); if (!Number.isNaN(n)) setLat(n); };
+  const setLngFromString = (val: string) => { const n = Number.parseFloat(val); if (!Number.isNaN(n)) setLng(n); };
+
+  useEffect(() => {
+    if (draftLatLng) {
+      setLat(Number(draftLatLng.lat.toFixed(4)));
+      setLng(Number(draftLatLng.lng.toFixed(4)));
+    }
+  }, [draftLatLng]);
 
   return (
     <div style={{
@@ -75,29 +105,43 @@ function FoodForm({
           style={{ width: '100%', padding: 10, border: '2px solid #000', borderRadius: 6, fontSize: 14, boxSizing: 'border-box' }} />
       </div>
 
-      <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
-        <div style={{ flex: 1 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>城市 *</label>
-          <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="如：成都"
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>省份 *</label>
+          <input value={province} onChange={(e) => setProvince(e.target.value)} placeholder="如：四川"
             style={{ width: '100%', padding: 10, border: '2px solid #000', borderRadius: 6, fontSize: 14, boxSizing: 'border-box' }} />
         </div>
-        <div style={{ flex: 1 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>省份</label>
-          <input value={province} onChange={(e) => setProvince(e.target.value)} placeholder="如：四川"
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>城市 *</label>
+          <input value={city} onChange={(e) => setCity(e.target.value)} onBlur={handleCityBlur} placeholder="如：成都"
             style={{ width: '100%', padding: 10, border: '2px solid #000', borderRadius: 6, fontSize: 14, boxSizing: 'border-box' }} />
         </div>
       </div>
 
-      {cityCoords && (
-        <div style={{ marginBottom: 12, padding: 8, background: 'rgba(79,140,255,0.1)', borderRadius: 6, fontSize: 12, color: '#4F8CFF' }}>
-          已定位到地图坐标 ({cityCoords.x}%, {cityCoords.y}%)
+      <div style={{ marginBottom: 12 }}>
+        <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>区/县（直辖市填区，非直辖市填县/区）</label>
+        <input value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="如：锦江区 / 双流县"
+          style={{ width: '100%', padding: 10, border: '2px solid #000', borderRadius: 6, fontSize: 14, boxSizing: 'border-box' }} />
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>纬度</label>
+          <input type="number" step="0.01" value={lat} onChange={(e) => setLatFromString(e.target.value)} placeholder="18 ~ 54"
+            style={{ width: '100%', padding: 10, border: '2px solid #000', borderRadius: 6, fontSize: 14, boxSizing: 'border-box' }} />
         </div>
-      )}
-      {!cityCoords && city.trim() && (
-        <div style={{ marginBottom: 12, padding: 8, background: 'rgba(255,100,100,0.1)', borderRadius: 6, fontSize: 12, color: '#c00' }}>
-          未找到该城市坐标，将使用默认位置。支持城市：{Object.keys(CITY_COORDS).slice(0, 10).join('、')}等
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>经度</label>
+          <input type="number" step="0.01" value={lng} onChange={(e) => setLngFromString(e.target.value)} placeholder="73 ~ 135"
+            style={{ width: '100%', padding: 10, border: '2px solid #000', borderRadius: 6, fontSize: 14, boxSizing: 'border-box' }} />
         </div>
-      )}
+      </div>
+
+      <div style={{ marginBottom: 12, padding: 8, background: 'rgba(79,140,255,0.1)', borderRadius: 6, fontSize: 12, color: '#4F8CFF' }}>
+        当前地图坐标：{latLngToXY(lat, lng).x.toFixed(1)}%, {latLngToXY(lat, lng).y.toFixed(1)}%
+        <br />
+        提示：可直接点击地图设置位置，或在输入框里微调经纬度。
+      </div>
 
       <div style={{ marginBottom: 12 }}>
         <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>简介（最多50字）</label>
@@ -144,10 +188,12 @@ export default function FoodMapSection() {
   const { data, isAdmin, addFoodSpot, updateFoodSpot, deleteFoodSpot } = useEditableData();
   const { setPage } = usePage();
   const sectionRef = useRef<HTMLElement>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
   const [selectedSpot, setSelectedSpot] = useState<FoodSpot | null>(null);
   const [editingSpot, setEditingSpot] = useState<FoodSpot | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [hoveredSpot, setHoveredSpot] = useState<string | null>(null);
+  const [draftLatLng, setDraftLatLng] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -168,7 +214,18 @@ export default function FoodMapSection() {
       addFoodSpot(spotData);
       setShowAddForm(false);
     }
+    setDraftLatLng(null);
   };
+
+  const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isAdmin || (!showAddForm && !editingSpot)) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setDraftLatLng(xyToLatLng(x, y));
+  };
+
+  const isPickingPosition = isAdmin && (showAddForm || editingSpot);
 
   return (
     <section ref={sectionRef} style={{ position: 'relative', padding: '100px 24px 60px', maxWidth: 1100, margin: '0 auto', minHeight: '100vh' }}>
@@ -204,20 +261,36 @@ export default function FoodMapSection() {
         )}
       </div>
 
+      {isPickingPosition && (
+        <div style={{ marginBottom: 16, padding: '10px 14px', background: 'var(--memphis-teal)', color: '#fff', border: '2px solid #000', borderRadius: 8, fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 13 }}>
+          🖱️ 点击地图可快速设置位置
+        </div>
+      )}
+
       {/* Add/Edit Form */}
       {isAdmin && showAddForm && (
         <div style={{ maxWidth: 420, marginBottom: 32 }}>
-          <FoodForm onSave={handleSave} onCancel={() => setShowAddForm(false)} />
+          <FoodForm onSave={handleSave} onCancel={() => { setShowAddForm(false); setDraftLatLng(null); }} draftLatLng={draftLatLng} />
         </div>
       )}
       {isAdmin && editingSpot && (
         <div style={{ maxWidth: 420, marginBottom: 32 }}>
-          <FoodForm initialData={editingSpot} onSave={handleSave} onCancel={() => { setEditingSpot(null); }} />
+          <FoodForm initialData={editingSpot} onSave={handleSave} onCancel={() => { setEditingSpot(null); setDraftLatLng(null); }} draftLatLng={draftLatLng} />
         </div>
       )}
 
       {/* Map Container */}
-      <div className="scroll-reveal" style={{ position: 'relative', width: '100%', paddingBottom: '80%', background: 'rgba(79,140,255,0.05)', border: '3px solid #000', borderRadius: 16, overflow: 'hidden', boxShadow: '8px 8px 0 rgba(0,0,0,0.1)' }}>
+      <div
+        ref={mapRef}
+        className="scroll-reveal"
+        style={{
+          position: 'relative', width: '100%', paddingBottom: '80%',
+          background: 'rgba(79,140,255,0.05)', border: '3px solid #000', borderRadius: 16,
+          overflow: 'hidden', boxShadow: '8px 8px 0 rgba(0,0,0,0.1)',
+          cursor: isPickingPosition ? 'crosshair' : 'default',
+        }}
+        onClick={handleMapClick}
+      >
         {/* China Map Background Image */}
         <div style={{ position: 'absolute', inset: '2%', width: '96%', height: '96%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <img
@@ -296,7 +369,10 @@ export default function FoodMapSection() {
         })}
 
         {/* Click empty area to deselect */}
-        <div style={{ position: 'absolute', inset: 0 }} onClick={() => setSelectedSpot(null)} />
+        <div
+          style={{ position: 'absolute', inset: 0, pointerEvents: isPickingPosition ? 'none' : 'auto' }}
+          onClick={() => { if (!isPickingPosition) setSelectedSpot(null); }}
+        />
       </div>
 
       {/* Selected spot detail panel */}
@@ -321,6 +397,9 @@ export default function FoodMapSection() {
               <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 22, margin: '0 0 4px' }}>{selectedSpot.name}</h3>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
                 <span style={{ padding: '3px 10px', background: 'rgba(79,140,255,0.15)', border: '1px solid #4F8CFF', borderRadius: 4, fontSize: 12, fontWeight: 600, color: '#4F8CFF' }}>{selectedSpot.city}</span>
+                {selectedSpot.district && (
+                  <span style={{ padding: '3px 10px', background: 'rgba(255,206,92,0.2)', border: '1px solid #FFCE5C', borderRadius: 4, fontSize: 12, fontWeight: 600, color: '#b38600' }}>{selectedSpot.district}</span>
+                )}
                 <span style={{ fontSize: 12, color: '#999' }}>{selectedSpot.province}</span>
                 <span style={{ fontSize: 12, color: '#999' }}>{selectedSpot.date}</span>
               </div>
@@ -367,8 +446,9 @@ export default function FoodMapSection() {
                 <h4 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, margin: 0 }}>{spot.name}</h4>
                 <span style={{ fontSize: 14, color: '#FFCE5C' }}>{Array(spot.rating).fill('★').join('')}</span>
               </div>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6 }}>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 12, color: '#4F8CFF', fontWeight: 600 }}>{spot.city}</span>
+                {spot.district && <span style={{ fontSize: 11, color: '#b38600', fontWeight: 600 }}>{spot.district}</span>}
                 <span style={{ fontSize: 11, color: '#999' }}>{spot.date}</span>
               </div>
               {spot.intro && <p style={{ fontSize: 13, color: '#666', lineHeight: 1.5, margin: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', textOverflow: 'ellipsis' }}>{spot.intro}</p>}

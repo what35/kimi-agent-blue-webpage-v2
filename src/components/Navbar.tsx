@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { usePage } from '../context/PageContext';
-import { useEditableData } from '../context/EditableDataContext';
 
 const NAV_ITEMS = [
   { label: '关于', href: '#about' },
@@ -13,7 +12,6 @@ export default function Navbar() {
   const [activeSection, setActiveSection] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
   const { page, setPage } = usePage();
-  const { isAdmin } = useEditableData();
 
   const handleScroll = useCallback(() => {
     const sections = NAV_ITEMS.map((item) => {
@@ -128,28 +126,26 @@ export default function Navbar() {
                 </button>
               );
             })}
-            {/* Admin-only food map link */}
-            {isAdmin && (
-              <button
-                onClick={() => { setPage('foodmap'); setMobileOpen(false); }}
-                style={{
-                  padding: '8px 20px',
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 600,
-                  fontSize: 14,
-                  border: '2px solid #000',
-                  borderRadius: 10,
-                  background: page === 'foodmap' ? 'var(--memphis-yellow)' : '#fff',
-                  color: '#000',
-                  transform: `rotate(0.5deg)${page === 'foodmap' ? ' translateY(-2px)' : ''}`,
-                  transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                  cursor: 'pointer',
-                  boxShadow: page === 'foodmap' ? '3px 3px 0 #000' : 'none',
-                }}
-              >
-                🍜 美食地图
-              </button>
-            )}
+            {/* Food map link — visible to everyone, admin-only editing is handled inside FoodMapSection */}
+            <button
+              onClick={() => { setPage('foodmap'); setMobileOpen(false); }}
+              style={{
+                padding: '8px 20px',
+                fontFamily: 'var(--font-display)',
+                fontWeight: 600,
+                fontSize: 14,
+                border: '2px solid #000',
+                borderRadius: 10,
+                background: page === 'foodmap' ? 'var(--memphis-yellow)' : '#fff',
+                color: '#000',
+                transform: `rotate(0.5deg)${page === 'foodmap' ? ' translateY(-2px)' : ''}`,
+                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                cursor: 'pointer',
+                boxShadow: page === 'foodmap' ? '3px 3px 0 #000' : 'none',
+              }}
+            >
+              🍜 美食地图
+            </button>
           </div>
 
           {/* Mobile Hamburger */}
@@ -254,25 +250,23 @@ export default function Navbar() {
               </button>
             );
           })}
-          {isAdmin && (
-            <button
-              onClick={() => { setPage('foodmap'); setMobileOpen(false); }}
-              style={{
-                padding: '16px 48px',
-                fontFamily: 'var(--font-display)',
-                fontWeight: 700,
-                fontSize: 24,
-                border: '3px solid #000',
-                background: '#FFCE5C',
-                color: '#000',
-                transform: 'rotate(2deg)',
-                cursor: 'pointer',
-                boxShadow: '6px 6px 0 #000',
-              }}
-            >
-              🍜 美食地图
-            </button>
-          )}
+          <button
+            onClick={() => { setPage('foodmap'); setMobileOpen(false); }}
+            style={{
+              padding: '16px 48px',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: 24,
+              border: '3px solid #000',
+              background: '#FFCE5C',
+              color: '#000',
+              transform: 'rotate(2deg)',
+              cursor: 'pointer',
+              boxShadow: '6px 6px 0 #000',
+            }}
+          >
+            🍜 美食地图
+          </button>
         </div>
       )}
     </>

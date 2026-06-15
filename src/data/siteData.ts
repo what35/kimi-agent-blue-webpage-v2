@@ -64,13 +64,30 @@ export interface Idea {
 export interface FoodSpot {
   id: string;
   name: string;      // 店名
-  city: string;      // 城市
   province: string;  // 省份
+  city: string;      // 城市
+  district?: string; // 区/县（直辖市填区，非直辖市填县/区）
   intro: string;     // 介绍（限制50字）
   rating: number;    // 评分 1-5
-  x: number;         // 地图上的x坐标百分比 (0-100)
+  lat: number;       // 纬度 (18-54)
+  lng: number;       // 经度 (73-135)
+  x: number;         // 地图上的x坐标百分比 (0-100)，由 lat/lng 计算
   y: number;         // 地图上的y坐标百分比 (0-100)
   date: string;      // 打卡日期
+}
+
+/** Convert lat/lng to map x/y percentage */
+export function latLngToXY(lat: number, lng: number): { x: number; y: number } {
+  const x = ((lng - 73) / 62) * 100;
+  const y = ((54 - lat) / 36) * 100;
+  return { x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) };
+}
+
+/** Convert map x/y percentage to lat/lng */
+export function xyToLatLng(x: number, y: number): { lat: number; lng: number } {
+  const lng = 73 + (x / 100) * 62;
+  const lat = 54 - (y / 100) * 36;
+  return { lat, lng };
 }
 
 export interface SiteData {
@@ -222,8 +239,11 @@ export const SITE_DATA: SiteData = {
       name: "蜀大侠火锅",
       city: "成都",
       province: "四川",
+      district: "",
       intro: "春熙路附近的老火锅店，麻辣牛肉和毛肚必点，排队两小时也要吃。",
       rating: 5,
+      lat: 33.84,
+      lng: 99.04,
       x: 42,
       y: 56,
       date: "2025-10",
@@ -233,8 +253,11 @@ export const SITE_DATA: SiteData = {
       name: "南京大排档",
       city: "南京",
       province: "江苏",
+      district: "",
       intro: "夫子庙店的盐水鸭和鸭血粉丝汤，南京味道的代表，每次去必打卡。",
       rating: 4,
+      lat: 37.44,
+      lng: 118.88,
       x: 74,
       y: 46,
       date: "2024-06",
@@ -244,8 +267,11 @@ export const SITE_DATA: SiteData = {
       name: "文和友小龙虾",
       city: "长沙",
       province: "湖南",
+      district: "",
       intro: "海信广场店，复古装修很有感觉，口味虾和猪油拌饭绝了。",
       rating: 5,
+      lat: 31.68,
+      lng: 111.44,
       x: 62,
       y: 62,
       date: "2025-04",
@@ -255,8 +281,11 @@ export const SITE_DATA: SiteData = {
       name: "点都德",
       city: "广州",
       province: "广东",
+      district: "",
       intro: "金沙红米肠和虾饺皇，早茶首选，人均不到一百吃到撑。",
       rating: 4,
+      lat: 27.36,
+      lng: 113.92,
       x: 66,
       y: 74,
       date: "2024-11",
