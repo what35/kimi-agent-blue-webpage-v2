@@ -126,6 +126,8 @@ export default function Navbar() {
                 </button>
               );
             })}
+            {/* 整页入口（美食地图/玄学）：移动端隐藏，走汉堡菜单 overlay，避免导航行溢出 */}
+            <div className="hidden md:flex" style={{ gap: 8, alignItems: 'center' }}>
             {/* Food map link — visible to everyone, admin-only editing is handled inside FoodMapSection */}
             <button
               onClick={() => { setPage('foodmap'); setMobileOpen(false); }}
@@ -146,6 +148,27 @@ export default function Navbar() {
             >
               🍜 美食地图
             </button>
+            {/* Xuanxue full page link */}
+            <button
+              onClick={() => { setPage('xuanxue'); setMobileOpen(false); }}
+              style={{
+                padding: '8px 20px',
+                fontFamily: 'var(--font-display)',
+                fontWeight: 600,
+                fontSize: 14,
+                border: '2px solid #000',
+                borderRadius: 12,
+                background: page === 'xuanxue' ? 'var(--memphis-purple)' : '#fff',
+                color: page === 'xuanxue' ? '#fff' : '#000',
+                transform: `rotate(-0.5deg)${page === 'xuanxue' ? ' translateY(-2px)' : ''}`,
+                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                cursor: 'pointer',
+                boxShadow: page === 'xuanxue' ? '3px 3px 0 #000' : 'none',
+              }}
+            >
+              🔮 玄学
+            </button>
+            </div>
           </div>
 
           {/* Mobile Hamburger */}
@@ -266,6 +289,23 @@ export default function Navbar() {
             }}
           >
             🍜 美食地图
+          </button>
+          <button
+            onClick={() => { setPage('xuanxue'); setMobileOpen(false); }}
+            style={{
+              padding: '16px 48px',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: 24,
+              border: '3px solid #000',
+              background: 'var(--memphis-purple)',
+              color: '#000',
+              transform: 'rotate(-2deg)',
+              cursor: 'pointer',
+              boxShadow: '6px 6px 0 #000',
+            }}
+          >
+            🔮 玄学
           </button>
         </div>
       )}

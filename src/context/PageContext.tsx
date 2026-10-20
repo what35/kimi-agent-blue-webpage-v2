@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 
-type Page = 'home' | 'foodmap';
+type Page = 'home' | 'foodmap' | 'xuanxue';
 
 interface PageContextType {
   page: Page;

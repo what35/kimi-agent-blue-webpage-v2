@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, lazy, Suspense } from 'react';
 import Lenis from '@studio-freight/lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -16,6 +16,9 @@ import { EditableDataProvider } from './context/EditableDataContext';
 import { DarkModeProvider } from './context/DarkModeContext';
 import { ViewModeProvider } from './context/ViewModeContext';
 import { PageProvider, usePage } from './context/PageContext';
+
+// 玄学整页数据量大（78 牌 + 64 卦 + 节气表），按需加载避免拖慢首页
+const XuanxuePage = lazy(() => import('./xuanxue/XuanxuePage'));
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -75,8 +78,12 @@ function AppContent() {
               </div>
               <Footer />
             </>
-          ) : (
+          ) : page === 'foodmap' ? (
             <FoodMapSection />
+          ) : (
+            <Suspense fallback={null}>
+              <XuanxuePage />
+            </Suspense>
           )}
         </main>
         <AdminPanel />

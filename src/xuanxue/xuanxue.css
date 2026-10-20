@@ -1,0 +1,351 @@
+/* 玄学模块样式：塔罗翻牌/洗牌、六爻铜钱/卦画动画，移植自 fortune-site/css/main.css 并适配 Memphis 蓝主题 */
+/* 所有类名带 xx- 前缀避免与全局样式冲突 */
+
+.xx-panel {
+  background: #fff;
+  border: 3px solid #000;
+  border-radius: 12px;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.12);
+  padding: 20px 22px;
+}
+
+html.dark .xx-panel {
+  background: #242438;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.4);
+}
+
+.xx-muted {
+  color: #888;
+  font-size: 13px;
+}
+
+html.dark .xx-muted {
+  color: #9a9ab0;
+}
+
+.xx-reading {
+  white-space: pre-wrap;
+  background: rgba(79, 140, 255, 0.06);
+  border-left: 3px solid var(--memphis-primary);
+  border-radius: 0 8px 8px 0;
+  padding: 16px 20px;
+  margin: 16px 0;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--color-text);
+}
+
+html.dark .xx-reading {
+  background: rgba(107, 159, 255, 0.1);
+}
+
+.xx-skip-hint {
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  color: #999;
+}
+
+/* ===== 塔罗：牌叠洗牌 ===== */
+.xx-tarot-board {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 26px 0;
+}
+
+.xx-tarot-card {
+  text-align: center;
+}
+
+.xx-tarot-position {
+  font-size: 13px;
+  margin-bottom: 8px;
+  letter-spacing: 0.2em;
+  color: var(--memphis-primary);
+  font-weight: 700;
+  font-family: var(--font-display);
+}
+
+.xx-deck {
+  position: relative;
+  width: 108px;
+  height: 192px;
+  margin: 30px auto;
+}
+
+.xx-deck-card {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  border: 2px solid #000;
+  background:
+    repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.12) 0 2px, transparent 2px 8px),
+    linear-gradient(165deg, var(--memphis-primary), var(--memphis-purple));
+  box-shadow: 3px 3px 0 #000;
+}
+
+.xx-deck-card:nth-child(1) { animation: xx-shuffle-a 0.9s ease-in-out infinite; }
+.xx-deck-card:nth-child(2) { animation: xx-shuffle-b 0.9s ease-in-out infinite; }
+.xx-deck-card:nth-child(3) { animation: xx-shuffle-c 0.9s ease-in-out infinite; }
+
+@keyframes xx-shuffle-a {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  50% { transform: translateX(-16px) rotate(-6deg); }
+}
+@keyframes xx-shuffle-b {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(16px) rotate(6deg); }
+}
+@keyframes xx-shuffle-c {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* ===== 塔罗：发牌飞入 + 3D 翻面 ===== */
+.xx-tarot-face {
+  width: 108px;
+  height: 192px;
+  perspective: 600px;
+}
+
+.xx-tarot-face.xx-fly-in {
+  animation: xx-fly-in 0.45s ease backwards;
+}
+
+@keyframes xx-fly-in {
+  from { transform: translateY(-34px) scale(0.85); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.xx-tarot-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.55s ease;
+}
+
+.xx-tarot-card.xx-open .xx-tarot-inner {
+  transform: rotateY(180deg);
+}
+
+.xx-tarot-back,
+.xx-tarot-img {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #000;
+  box-shadow: 3px 3px 0 #000;
+}
+
+.xx-tarot-back {
+  background:
+    repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.12) 0 2px, transparent 2px 8px),
+    linear-gradient(165deg, var(--memphis-primary), var(--memphis-purple));
+}
+
+.xx-tarot-img {
+  transform: rotateY(180deg);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  background: #fff;
+}
+
+.xx-tarot-img.xx-img-reversed {
+  transform: rotateY(180deg) rotate(180deg);
+}
+
+/* 牌名与正逆位翻面后淡入 */
+.xx-tarot-name-under,
+.xx-tarot-orient {
+  opacity: 0;
+  transition: opacity 0.5s ease 0.1s;
+}
+
+.xx-tarot-card.xx-open .xx-tarot-name-under,
+.xx-tarot-card.xx-open .xx-tarot-orient {
+  opacity: 1;
+}
+
+.xx-tarot-name-under {
+  margin-top: 8px;
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--color-text);
+}
+
+.xx-tarot-orient {
+  margin-top: 4px;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: var(--memphis-primary);
+  font-weight: 600;
+}
+
+/* ===== 六爻：摇铜钱过场 ===== */
+.xx-cast-wrap {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.xx-casts-panel {
+  flex: 1;
+  min-width: 280px;
+}
+
+.xx-gua-preview {
+  width: 170px;
+  text-align: center;
+}
+
+.xx-gua-preview-title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  letter-spacing: 0.3em;
+}
+
+.xx-gua-preview-lines {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  min-height: 150px;
+  gap: 8px;
+}
+
+.xx-mini-yao {
+  display: block;
+  width: 90px;
+  height: 9px;
+  border-radius: 2px;
+}
+
+.xx-mini-yao.xx-yang {
+  background: var(--color-text);
+}
+
+.xx-mini-yao.xx-yin {
+  background: linear-gradient(to right, var(--color-text) 0 42%, transparent 42% 58%, var(--color-text) 58% 100%);
+}
+
+.xx-mini-yao.xx-slide-in {
+  animation: xx-yao-in 0.4s ease;
+}
+
+@keyframes xx-yao-in {
+  from { transform: translateY(14px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.xx-cast-line {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 10px 0;
+}
+
+.xx-cast-round {
+  color: #888;
+  font-size: 13px;
+  width: 56px;
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
+}
+
+html.dark .xx-cast-round {
+  color: #9a9ab0;
+}
+
+.xx-coin {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  line-height: 30px;
+  text-align: center;
+  border-radius: 50%;
+  border: 2px solid #000;
+  background: var(--memphis-yellow);
+  color: #000;
+  margin-right: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 2px 2px 0 #000;
+}
+
+.xx-coin.xx-flipping {
+  animation: xx-coin-flip 0.55s ease;
+}
+
+@keyframes xx-coin-flip {
+  from { transform: rotateX(0) translateY(-14px); }
+  50% { transform: rotateX(360deg) translateY(-22px); }
+  to { transform: rotateX(720deg) translateY(0); }
+}
+
+.xx-cast-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* ===== 六爻：卦画 ===== */
+.xx-gua-lines {
+  margin: 14px 0;
+}
+
+.xx-yao-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 7px 0;
+}
+
+.xx-yao-label {
+  width: 80px;
+  color: #888;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+
+html.dark .xx-yao-label {
+  color: #9a9ab0;
+}
+
+.xx-yao {
+  display: inline-block;
+  width: 120px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.xx-yao.xx-yang {
+  background: var(--color-text);
+}
+
+.xx-yao.xx-yin {
+  background: linear-gradient(to right, var(--color-text) 0 42%, transparent 42% 58%, var(--color-text) 58% 100%);
+}
+
+/* ===== 历史记录 ===== */
+.xx-history-item summary {
+  cursor: pointer;
+  color: var(--memphis-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.xx-result-line {
+  color: var(--memphis-primary);
+  font-weight: 600;
+  margin: 6px 0;
+}
